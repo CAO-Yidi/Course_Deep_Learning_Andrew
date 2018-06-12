@@ -1,0 +1,949 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:05.730
+In the last video, you saw the notation we used to define sequence learning problems.
+
+2
+00:00:05.730 --> 00:00:08.190
+Now, let's talk about how you can build a model,
+
+3
+00:00:08.190 --> 00:00:11.615
+build a neural network to drawing the mapping from X to Y.
+
+4
+00:00:11.615 --> 00:00:17.100
+Now, one thing you could do is try to use a standard neural network for this task.
+
+5
+00:00:17.100 --> 00:00:19.350
+So in our previous example,
+
+6
+00:00:19.350 --> 00:00:21.790
+we had nine input words.
+
+7
+00:00:21.790 --> 00:00:25.560
+So you could imagine trying to take these nine input words,
+
+8
+00:00:25.560 --> 00:00:30.735
+maybe the nine one heart vectors and feeding them into a standard neural network,
+
+9
+00:00:30.735 --> 00:00:34.020
+maybe a few hidden layers and then eventually,
+
+10
+00:00:34.020 --> 00:00:36.990
+have this output the nine values zero or
+
+11
+00:00:36.990 --> 00:00:41.395
+one that tell you whether each word is part of a person's name.
+
+12
+00:00:41.395 --> 00:00:43.730
+But this turns out not to work well,
+
+13
+00:00:43.730 --> 00:00:46.405
+and there are really two main problems with this.
+
+14
+00:00:46.405 --> 00:00:52.455
+The first is that the inputs and outputs can be different lengths in different examples.
+
+15
+00:00:52.455 --> 00:00:55.260
+So it's not as if every single example has
+
+16
+00:00:55.260 --> 00:00:59.830
+the same input length TX or the same output length TY.
+
+17
+00:00:59.830 --> 00:01:03.120
+And maybe if every sentence had a maximum length,
+
+18
+00:01:03.120 --> 00:01:04.700
+maybe you could pad,
+
+19
+00:01:04.700 --> 00:01:07.705
+or zero pad every input up to that maximum length,
+
+20
+00:01:07.705 --> 00:01:11.700
+but this still doesn't seem like a good representation.
+
+21
+00:01:11.700 --> 00:01:14.250
+And in a second, it might be more serious problem is
+
+22
+00:01:14.250 --> 00:01:17.760
+that a naive neural network architecture like this,
+
+23
+00:01:17.760 --> 00:01:21.840
+it doesn't share features learned across different positions of techs.
+
+24
+00:01:21.840 --> 00:01:26.150
+In particular, if the neural network has learned that maybe the word heavy
+
+25
+00:01:26.150 --> 00:01:31.965
+appearing in position one gives a sign that that is part of a person's name,
+
+26
+00:01:31.965 --> 00:01:34.590
+then one would be nice if it automatically figures out
+
+27
+00:01:34.590 --> 00:01:37.515
+that heavy appearing in some other position,
+
+28
+00:01:37.515 --> 00:01:41.600
+XT also means that that might be a person's name.
+
+29
+00:01:41.600 --> 00:01:47.370
+And this is maybe similar to what you saw in convolutional neural networks where you
+
+30
+00:01:47.370 --> 00:01:50.040
+want things learned for one part of
+
+31
+00:01:50.040 --> 00:01:53.095
+the image to generalize quickly to other parts of the image,
+
+32
+00:01:53.095 --> 00:01:57.510
+and we'd like similar effect for sequence data as well.
+
+33
+00:01:57.510 --> 00:02:00.840
+And similar to what you saw with confenets using
+
+34
+00:02:00.840 --> 00:02:06.715
+a better representation will also let you reduce the number of parameters in your model.
+
+35
+00:02:06.715 --> 00:02:12.785
+So previously, we said that each of these is a 10,000 dimensional one vector.
+
+36
+00:02:12.785 --> 00:02:16.775
+And so, this is just a very large input layer.
+
+37
+00:02:16.775 --> 00:02:22.140
+If the total input size was maximum number of words times 10,000,
+
+38
+00:02:22.140 --> 00:02:24.390
+and the weight matrix of
+
+39
+00:02:24.390 --> 00:02:28.090
+this first layer would end up having an enormous number of parameters.
+
+40
+00:02:28.090 --> 00:02:33.000
+So a recurrent neural network which will start to describe in the next slide,
+
+41
+00:02:33.000 --> 00:02:36.990
+does not have either of these disadvantages.
+
+42
+00:02:36.990 --> 00:02:39.951
+So what is a recurrent neural network?
+
+43
+00:02:39.951 --> 00:02:42.295
+Let's build one out.
+
+44
+00:02:42.295 --> 00:02:46.110
+So if you are reading the sentence from left to right,
+
+45
+00:02:46.110 --> 00:02:50.935
+the first word you read is the some first where say X1.
+
+46
+00:02:50.935 --> 00:02:56.484
+What we're going to do is take the first word and feed it into a neural network layer.
+
+47
+00:02:56.484 --> 00:02:59.030
+I'm going to draw it like this.
+
+48
+00:02:59.030 --> 00:03:02.470
+So that's a hidden layer of the first neural network.
+
+49
+00:03:02.470 --> 00:03:07.260
+And look at how the neural network maybe try to predict the output.
+
+50
+00:03:07.260 --> 00:03:10.255
+So is this part of a person's name or not?
+
+51
+00:03:10.255 --> 00:03:14.880
+And what a recurrent neural network does is when it
+
+52
+00:03:14.880 --> 00:03:19.875
+then goes on to read the second word in a sentence,
+
+53
+00:03:19.875 --> 00:03:26.815
+say X2, instead of just predicting Y2 using only X2,
+
+54
+00:03:26.815 --> 00:03:33.750
+it also gets to input some information from whether a computer that time-step ones.
+
+55
+00:03:33.750 --> 00:03:40.405
+So in particular, the activation value from time-step one is passed on to time-step 2.
+
+56
+00:03:40.405 --> 00:03:42.630
+And then, at the next time-step,
+
+57
+00:03:42.630 --> 00:03:50.105
+a recurrent neural network inputs the third word X3,
+
+58
+00:03:50.105 --> 00:03:51.920
+and it tries to predict,
+
+59
+00:03:51.920 --> 00:03:59.440
+output some prediction y-hat 3, and so on,
+
+60
+00:03:59.440 --> 00:04:07.736
+up until the last time-step where inputs XTx,
+
+61
+00:04:07.736 --> 00:04:13.050
+and then it outputs Y hat TY.
+
+62
+00:04:13.050 --> 00:04:15.830
+In this example, Tx=Ty,
+
+63
+00:04:15.830 --> 00:04:22.190
+and the architecture will change a bit if Tx and Ty are not identical.
+
+64
+00:04:22.190 --> 00:04:24.335
+And so, at each time-step,
+
+65
+00:04:24.335 --> 00:04:27.180
+the recurrent neural network passes on
+
+66
+00:04:27.180 --> 00:04:31.015
+this activation to the next time-step for it to use.
+
+67
+00:04:31.015 --> 00:04:33.795
+And to kick off the whole thing,
+
+68
+00:04:33.795 --> 00:04:38.090
+we'll also have some made up activation at time zero.
+
+69
+00:04:38.090 --> 00:04:41.060
+This is usually the vector of zeroes.
+
+70
+00:04:41.060 --> 00:04:44.790
+Some researchers will initialize a zero randomly have other ways
+
+71
+00:04:44.790 --> 00:04:50.480
+to initialize a zero but really having a vector zero is just a fake.
+
+72
+00:04:50.480 --> 00:04:54.165
+Time Zero activation is the most common choice.
+
+73
+00:04:54.165 --> 00:04:55.595
+And so that does input into the neural network.
+
+74
+00:04:55.595 --> 00:05:00.560
+In some research papers or in some books,
+
+75
+00:05:00.560 --> 00:05:03.030
+you see this type of neural network drawn with
+
+76
+00:05:03.030 --> 00:05:06.420
+the following diagram in which every time-step,
+
+77
+00:05:06.420 --> 00:05:09.430
+you input X and output Y hat,
+
+78
+00:05:09.430 --> 00:05:14.510
+maybe sometimes there will be a T index there,
+
+79
+00:05:14.510 --> 00:05:16.975
+and then to denote the recurrent connection,
+
+80
+00:05:16.975 --> 00:05:19.490
+sometimes people will draw a loop like that,
+
+81
+00:05:19.490 --> 00:05:20.935
+that the layer feeds back to itself.
+
+82
+00:05:20.935 --> 00:05:27.135
+Sometimes they'll draw a shaded box to denote that this is the shaded box here,
+
+83
+00:05:27.135 --> 00:05:29.790
+denotes a time delay of one step.
+
+84
+00:05:29.790 --> 00:05:33.550
+I personally find these recurrent diagrams much harder to interpret.
+
+85
+00:05:33.550 --> 00:05:35.370
+And so throughout this course,
+
+86
+00:05:35.370 --> 00:05:39.445
+I will tend to draw the on the road diagram like the one you have on the left.
+
+87
+00:05:39.445 --> 00:05:41.490
+But if you see something like the diagram on
+
+88
+00:05:41.490 --> 00:05:43.895
+the right in a textbook or in a research paper,
+
+89
+00:05:43.895 --> 00:05:46.590
+what it really means, or the way I tend to think about it is the
+
+90
+00:05:46.590 --> 00:05:49.750
+mentally unrolled into the diagram you have on the left hand side.
+
+91
+00:05:49.750 --> 00:05:55.350
+The recurrent neural network scans through the data from left to right.
+
+92
+00:05:55.350 --> 00:05:59.475
+And the parameters it uses for each time step are shared.
+
+93
+00:05:59.475 --> 00:06:01.830
+So there will be a set of parameters which
+
+94
+00:06:01.830 --> 00:06:04.435
+we'll describe in greater detail on the next slide,
+
+95
+00:06:04.435 --> 00:06:07.980
+but the parameters governing the connection from X1 to
+
+96
+00:06:07.980 --> 00:06:12.310
+the hidden layer will be some set of the parameters we're going to write as WAX,
+
+97
+00:06:12.310 --> 00:06:16.320
+and it's the same parameters WAX that it
+
+98
+00:06:16.320 --> 00:06:21.656
+uses for every time-step I guess you could write WAX there as well.
+
+99
+00:06:21.656 --> 00:06:25.245
+And the activations, the horizontal connections,
+
+100
+00:06:25.245 --> 00:06:28.550
+will be governed by some set of parameters WAA,
+
+101
+00:06:28.550 --> 00:06:35.100
+and is the same parameters WAA use on every time-step,
+
+102
+00:06:35.100 --> 00:06:43.495
+and similarly, the sum WYA that governs the output predictions.
+
+103
+00:06:43.495 --> 00:06:48.784
+And I'll describe in the next slide exactly how these parameters work.
+
+104
+00:06:48.784 --> 00:06:50.855
+So in this recurrent neural network,
+
+105
+00:06:50.855 --> 00:06:54.332
+what this means is that we're making the prediction for Y3
+
+106
+00:06:54.332 --> 00:06:58.305
+against the information not only from X3,
+
+107
+00:06:58.305 --> 00:07:01.080
+but also the information from X1 and X2,
+
+108
+00:07:01.080 --> 00:07:08.110
+because the information of X1 can pass through this way to help the prediction with Y3.
+
+109
+00:07:08.110 --> 00:07:11.550
+Now one weakness of this RNN is that it only uses
+
+110
+00:07:11.550 --> 00:07:15.590
+the information that is earlier in the sequence to make a prediction,
+
+111
+00:07:15.590 --> 00:07:18.360
+in particular, when predicting Y3,
+
+112
+00:07:18.360 --> 00:07:21.713
+it doesn't use information about the words X4,
+
+113
+00:07:21.713 --> 00:07:23.968
+X5, X6 and so on.
+
+114
+00:07:23.968 --> 00:07:29.370
+And so this is a problem because if you're given a sentence,
+
+115
+00:07:29.370 --> 00:07:32.550
+he said, "Teddy Roosevelt was a great president."
+
+116
+00:07:32.550 --> 00:07:36.795
+In order to decide whether or not the word Teddy is part of a person's name,
+
+117
+00:07:36.795 --> 00:07:40.200
+it be really useful to know not just information from
+
+118
+00:07:40.200 --> 00:07:44.730
+the first two words but to know information from the later words in the sentence as well,
+
+119
+00:07:44.730 --> 00:07:46.950
+because the sentence could also happen,
+
+120
+00:07:46.950 --> 00:07:49.385
+he said, "Teddy bears are on sale!"
+
+121
+00:07:49.385 --> 00:07:51.960
+And so, given just the first three words,
+
+122
+00:07:51.960 --> 00:07:57.045
+it's not possible to know for sure whether the word Teddy is part of a person's name.
+
+123
+00:07:57.045 --> 00:07:58.565
+In the first example, it is,
+
+124
+00:07:58.565 --> 00:08:00.075
+in the second example, is not,
+
+125
+00:08:00.075 --> 00:08:05.600
+but you can't tell the difference if you look only at the first three words.
+
+126
+00:08:05.600 --> 00:08:07.230
+So one limitation of
+
+127
+00:08:07.230 --> 00:08:11.910
+this particular neural network structure is that the prediction at a certain time
+
+128
+00:08:11.910 --> 00:08:15.635
+uses inputs or uses information from the inputs
+
+129
+00:08:15.635 --> 00:08:19.615
+earlier in the sequence but not information later in the sequence.
+
+130
+00:08:19.615 --> 00:08:22.710
+We will address this in a later video where we talk about
+
+131
+00:08:22.710 --> 00:08:28.990
+a bidirectional recurrent neural networks or BRNNs.
+
+132
+00:08:28.990 --> 00:08:30.285
+But for now,
+
+133
+00:08:30.285 --> 00:08:35.265
+this simpler uni-directional neural network architecture
+
+134
+00:08:35.265 --> 00:08:38.345
+will suffice for us to explain the key concepts.
+
+135
+00:08:38.345 --> 00:08:41.040
+And we just have to make a quick modifications in these ideas
+
+136
+00:08:41.040 --> 00:08:43.880
+later to enable say the prediction of Y-hat 3
+
+137
+00:08:43.880 --> 00:08:46.500
+to use both information earlier in
+
+138
+00:08:46.500 --> 00:08:49.840
+the sequence as well as information later in the sequence,
+
+139
+00:08:49.840 --> 00:08:52.010
+but we'll get to that in a later video.
+
+140
+00:08:52.010 --> 00:08:57.490
+So let's not write to explicitly what are the calculations that this neural network does.
+
+141
+00:08:57.490 --> 00:09:02.070
+Here's a cleaned out version of the picture of the neural network.
+
+142
+00:09:02.070 --> 00:09:04.150
+As I mentioned previously, typically,
+
+143
+00:09:04.150 --> 00:09:09.700
+you started off with the input a0 equals the vector of all zeroes.
+
+144
+00:09:09.700 --> 00:09:13.750
+Next. This is what a forward propagation looks like.
+
+145
+00:09:13.750 --> 00:09:18.351
+To compute a1, you would compute that as an activation function g,
+
+146
+00:09:18.351 --> 00:09:25.677
+applied to Waa times
+
+147
+00:09:25.677 --> 00:09:36.970
+a0 plus W a x times x1 plus a bias was going to write it as ba,
+
+148
+00:09:36.970 --> 00:09:42.120
+and then to compute y hat 1 the prediction of times that one,
+
+149
+00:09:42.120 --> 00:09:44.850
+that will be some activation function,
+
+150
+00:09:44.850 --> 00:09:46.785
+maybe a different activation function,
+
+151
+00:09:46.785 --> 00:09:48.320
+than the one above.
+
+152
+00:09:48.320 --> 00:09:58.130
+But apply to WYA times a1 plus b y.
+
+153
+00:09:58.130 --> 00:10:01.603
+And the notation convention I'm going to use for the sub
+
+154
+00:10:01.603 --> 00:10:05.454
+zero of these matrices like that example, W a x.
+
+155
+00:10:05.454 --> 00:10:12.104
+The second index means that this W a x is going to be multiplied by some x like quantity,
+
+156
+00:10:12.104 --> 00:10:17.030
+and this means that this is used to compute some a like quantity.
+
+157
+00:10:17.030 --> 00:10:18.990
+Like like so. And similarly,
+
+158
+00:10:18.990 --> 00:10:23.810
+you notice that here WYA is multiplied by a sum
+
+159
+00:10:23.810 --> 00:10:29.655
+a like quantity to compute a y type quantity.
+
+160
+00:10:29.655 --> 00:10:32.490
+The activation function used in- to compute
+
+161
+00:10:32.490 --> 00:10:40.620
+the activations will often be a tonnage and the choice of an RNN and sometimes,
+
+162
+00:10:40.620 --> 00:10:48.330
+values are also used although the tonnage is actually a pretty common choice.
+
+163
+00:10:48.330 --> 00:10:52.110
+And we have other ways of preventing
+
+164
+00:10:52.110 --> 00:10:56.215
+the vanishing gradient problem which we'll talk about later this week.
+
+165
+00:10:56.215 --> 00:10:59.235
+And depending on what your output y is,
+
+166
+00:10:59.235 --> 00:11:02.175
+if it is a binary classification problem,
+
+167
+00:11:02.175 --> 00:11:05.700
+then I guess you would use a sigmoid activation function
+
+168
+00:11:05.700 --> 00:11:09.315
+or it could be a soft Max if you have a ky classification problem.
+
+169
+00:11:09.315 --> 00:11:11.840
+But the choice of activation function here would
+
+170
+00:11:11.840 --> 00:11:15.255
+depend on what type of output y you have.
+
+171
+00:11:15.255 --> 00:11:17.505
+So, for the name entity recognition task,
+
+172
+00:11:17.505 --> 00:11:19.290
+where Y was either zero or one.
+
+173
+00:11:19.290 --> 00:11:24.455
+I guess the second g could be a signal and activation function.
+
+174
+00:11:24.455 --> 00:11:28.250
+And I guess you could write g2 if you want to distinguish that this
+
+175
+00:11:28.250 --> 00:11:32.286
+is these could be different activation functions but I usually won't do that.
+
+176
+00:11:32.286 --> 00:11:35.175
+And then, more generally at time t,
+
+177
+00:11:35.175 --> 00:11:41.670
+a t will be g of W a a times a,
+
+178
+00:11:41.670 --> 00:11:43.935
+from the previous time-step,
+
+179
+00:11:43.935 --> 00:11:49.595
+plus W a x of x from the current time-step plus B a,
+
+180
+00:11:49.595 --> 00:11:54.390
+and y hat t is equal to g, again,
+
+181
+00:11:54.390 --> 00:12:03.030
+it could be different activation functions but g of WYA times a t plus B y.
+
+182
+00:12:03.030 --> 00:12:08.230
+So, these equations define for propagation in the neural network.
+
+183
+00:12:08.230 --> 00:12:14.230
+Where you would start off with a zeroes [inaudible] and then using a zero and X1,
+
+184
+00:12:14.230 --> 00:12:18.225
+you will compute a1 and y hat one, and then you,
+
+185
+00:12:18.225 --> 00:12:25.510
+take X2 and use X2 and A1 to compute A2 and Y hat two and so on,
+
+186
+00:12:25.510 --> 00:12:30.710
+and you carry out for propagation going from the left to the right of this picture.
+
+187
+00:12:30.710 --> 00:12:34.530
+Now, in order to help us develop the more complex neural networks,
+
+188
+00:12:34.530 --> 00:12:39.120
+I'm actually going to take this notation and simplify it a little bit.
+
+189
+00:12:39.120 --> 00:12:42.765
+So, let me copy these two equations in the next slide.
+
+190
+00:12:42.765 --> 00:12:47.130
+Right. Here they are, and what I'm going to do
+
+191
+00:12:47.130 --> 00:12:50.730
+is actually take- so to simplify the notation a bit,
+
+192
+00:12:50.730 --> 00:12:56.145
+I'm actually going to take that and write in a slightly simpler way.
+
+193
+00:12:56.145 --> 00:13:00.465
+And someone very does this a<t> = g times
+
+194
+00:13:00.465 --> 00:13:05.130
+just a matrix W a times a new quantity is going to
+
+195
+00:13:05.130 --> 00:13:09.290
+be a<t> minus one comma
+
+196
+00:13:09.290 --> 00:13:16.440
+x<t> and then, plus B a.
+
+197
+00:13:16.440 --> 00:13:23.260
+And so, that underlining quantity on the left and right are supposed to be equivalent.
+
+198
+00:13:23.260 --> 00:13:30.055
+So, the way we define W a is we'll take this matrix W a a and this matrix W a x.
+
+199
+00:13:30.055 --> 00:13:36.160
+And put them side by side and stack them horizontally as follows.
+
+200
+00:13:36.160 --> 00:13:38.910
+And this will be the matrix W a.
+
+201
+00:13:38.910 --> 00:13:47.365
+So for example, if a was a hundred dimensional,
+
+202
+00:13:47.365 --> 00:13:49.480
+and then another example,
+
+203
+00:13:49.480 --> 00:13:51.875
+X was 10,000 dimensional,
+
+204
+00:13:51.875 --> 00:13:57.475
+then W a a would have been a 100 by 100 dimensional matrix
+
+205
+00:13:57.475 --> 00:14:03.880
+and W a x would have been a 100 by 10,000 dimensional matrix.
+
+206
+00:14:03.880 --> 00:14:09.080
+And so stacking these two matrices together this would be 100 dimensional.
+
+207
+00:14:09.080 --> 00:14:13.995
+This would be 100, and this would be I guess 10,000 elements.
+
+208
+00:14:13.995 --> 00:14:22.915
+So W a will be a 100 by one zero one zero zero zero dimensional matrix.
+
+209
+00:14:22.915 --> 00:14:25.780
+I guess this diagram on the left is not drawn to scale.
+
+210
+00:14:25.780 --> 00:14:29.270
+Since W a x would be a very wide matrix.
+
+211
+00:14:29.270 --> 00:14:31.630
+And what this notation means,
+
+212
+00:14:31.630 --> 00:14:34.945
+is to just take the two vectors,
+
+213
+00:14:34.945 --> 00:14:36.645
+and stack them together.
+
+214
+00:14:36.645 --> 00:14:39.085
+So, let me use that notation to denote that
+
+215
+00:14:39.085 --> 00:14:41.950
+we're going to take the vector a<t> minus one.
+
+216
+00:14:41.950 --> 00:14:48.475
+So there's a 100 dimensional and stack it on top of a t.
+
+217
+00:14:48.475 --> 00:14:55.415
+So this ends up being a one zero one zero zero dimensional vector.
+
+218
+00:14:55.415 --> 00:15:02.850
+And so hopefully, you check for yourself that this matrix times this vector,
+
+219
+00:15:02.850 --> 00:15:05.639
+just gives you back to the original quantity.
+
+220
+00:15:05.639 --> 00:15:11.393
+Right. Because now, this matrix W a a times W
+
+221
+00:15:11.393 --> 00:15:17.895
+a x multiplied by this a<t minus 1> x<t> vector,
+
+222
+00:15:17.895 --> 00:15:24.456
+this is just equal to W a a times a<t minus 1> plus W
+
+223
+00:15:24.456 --> 00:15:32.421
+a x times x t which is exactly what we had back over here.
+
+224
+00:15:32.421 --> 00:15:35.640
+So, the advantages of this notation is that rather than carrying
+
+225
+00:15:35.640 --> 00:15:39.960
+around two parameter matrices W a a and W a x,
+
+226
+00:15:39.960 --> 00:15:43.877
+we can compress them into just one parameter matrix W a.
+
+227
+00:15:43.877 --> 00:15:48.875
+And this will simplify a notation for when we develop more complex models.
+
+228
+00:15:48.875 --> 00:15:53.113
+And then, for this, in a similar way I'm just going to rewrite this
+
+229
+00:15:53.113 --> 00:16:00.150
+slightly with the ranges as W y a t plus b y.
+
+230
+00:16:00.150 --> 00:16:06.150
+And now, we just have the substrates in the notation W y and b y,
+
+231
+00:16:06.150 --> 00:16:09.170
+it denotes what type of output quantity over computing.
+
+232
+00:16:09.170 --> 00:16:12.550
+So WY indicates that there's a weight matrix of computing a y like
+
+233
+00:16:12.550 --> 00:16:16.210
+quantity and here a Wa and ba on top.
+
+234
+00:16:16.210 --> 00:16:19.760
+In the case of those the parameters of computing that an
+
+235
+00:16:19.760 --> 00:16:23.390
+a and activation output quantity. So, that's it.
+
+236
+00:16:23.390 --> 00:16:26.880
+You now know, what is a basic recurrent network.
+
+237
+00:16:26.880 --> 00:16:31.050
+Next, let's talk about back propagation and how you learn with these RNNs.
